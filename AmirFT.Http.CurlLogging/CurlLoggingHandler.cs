@@ -1,7 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
 namespace AmirFT.Http.CurlLogging;
@@ -11,6 +8,7 @@ public class CurlLoggingHandler : DelegatingHandler
 {
     private readonly ILogger<CurlLoggingHandler> _logger;
     private readonly SensitiveDataRedactor _redactor;
+    private readonly CurlLoggingOptions _options;
 
     public CurlLoggingHandler(ILogger<CurlLoggingHandler> logger)
         : this(logger, CurlLoggingOptions.Default)
@@ -20,7 +18,8 @@ public class CurlLoggingHandler : DelegatingHandler
     public CurlLoggingHandler(ILogger<CurlLoggingHandler> logger, CurlLoggingOptions options)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _redactor = new SensitiveDataRedactor(options ?? CurlLoggingOptions.Default);
+        _options = options ?? CurlLoggingOptions.Default;
+        _redactor = new SensitiveDataRedactor(_options);
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -36,7 +35,28 @@ public class CurlLoggingHandler : DelegatingHandler
             _logger.LogError(ex, "Failed to generate cURL command for request to {Uri}", request.RequestUri);
         }
 
-        return await base.SendAsync(request, cancellationToken);
+        HttpResponseMessage response;
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            response = await base.SendAsync(request, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            _logger.LogError(ex, "HTTP request to {Uri} failed after {ElapsedMs} ms", request.RequestUri, stopwatch.ElapsedMilliseconds);
+            throw;
+        }
+
+        stopwatch.Stop();
+
+        if (_options.LogResponse)
+        {
+            await LogResponseAsync(response, stopwatch.ElapsedMilliseconds);
+        }
+
+        return response;
     }
 
     private async Task<string> ToCurlCommand(HttpRequestMessage request)
@@ -87,5 +107,40 @@ public class CurlLoggingHandler : DelegatingHandler
         }
 
         return curl;
+    }
+
+    private async Task LogResponseAsync(HttpResponseMessage response, long elapsedMs)
+    {
+        try
+        {
+            var responseBody = response.Content != null
+                ? await response.Content.ReadAsStringAsync()
+                : string.Empty;
+
+            var headers = string.Join("\n", response.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}"));
+
+            if (response.Content?.Headers != null)
+            {
+                var contentHeaders = string.Join("\n", response.Content.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}"));
+                if (!string.IsNullOrEmpty(contentHeaders))
+                {
+                    headers = string.IsNullOrEmpty(headers) ? contentHeaders : $"{headers}\n{contentHeaders}";
+                }
+            }
+
+            var redactedBody = _options.EnableRedaction ? _redactor.RedactBody(responseBody) : responseBody;
+
+            _logger.LogInformation(
+                "HTTP Response from {Uri} in {ElapsedMs}ms - Status: {StatusCode}\nHeaders:\n{Headers}\nBody:\n{Body}",
+                response.RequestMessage?.RequestUri,
+                elapsedMs,
+                (int)response.StatusCode,
+                headers,
+                redactedBody);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to log HTTP response for {Uri}", response.RequestMessage?.RequestUri);
+        }
     }
 }

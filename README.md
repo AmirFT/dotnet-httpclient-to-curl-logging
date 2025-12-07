@@ -32,6 +32,9 @@ Manually reconstructing HTTP requests as cURL commands is tedious and error-pron
 - **Zero Configuration** - Just add the handler and start logging
 - **Full Request Capture** - Headers, body, and query parameters
 - **Copy & Paste Ready** - Output commands work directly in terminal
+- **Response Logging** - Logs response status, headers, body, and elapsed time
+- **Request Timing** - Track how long each HTTP request takes
+- **Error Tracking** - Logs failed requests with timing information
 - **Sensitive Data Redaction** - Automatically redacts passwords, tokens, API keys, credit cards, and more
 - **Multi-Framework Support** - .NET Standard 2.0, .NET 6, .NET 8, .NET 10
 
@@ -88,11 +91,55 @@ await client.PostAsync("https://api.example.com/users",
 
 You'll see this in your logs:
 
+**Request (cURL command):**
 ```bash
 curl -X POST 'https://api.example.com/users' \
   -H 'Content-Type: application/json; charset=utf-8' \
   -d '{"name":"John"}'
 ```
+
+**Response:**
+```
+HTTP Response from https://api.example.com/users in 145ms - Status: 200
+Headers:
+Content-Type: application/json; charset=utf-8
+Content-Length: 42
+Body:
+{"id":123,"name":"John","created":true}
+```
+
+---
+
+## Response Logging
+
+By default, the handler logs both requests and responses. Response logging includes:
+
+- **Status Code** - HTTP status code (200, 404, 500, etc.)
+- **Elapsed Time** - How long the request took in milliseconds
+- **Headers** - All response headers
+- **Body** - Response body content (with sensitive data redacted)
+
+### Disable Response Logging
+
+If you only want the cURL command without response details:
+
+```csharp
+var options = new CurlLoggingOptions
+{
+    LogResponse = false
+};
+
+var handler = new CurlLoggingHandler(logger, options);
+```
+
+### Error Handling
+
+When a request fails (throws an exception), the handler logs:
+- The target URI
+- Elapsed time before failure
+- The exception details
+
+This helps you identify slow or failing third-party API calls.
 
 ---
 
@@ -132,6 +179,9 @@ var options = new CurlLoggingOptions
 {
     // Enable/disable redaction (default: true)
     EnableRedaction = true,
+
+    // Enable/disable response logging (default: true)
+    LogResponse = true,
 
     // Custom placeholder text (default: "[REDACTED]")
     RedactedPlaceholder = "***",

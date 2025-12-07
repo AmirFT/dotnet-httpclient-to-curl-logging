@@ -11,7 +11,13 @@ public class CurlLoggingOptions
     /// Gets or sets whether sensitive data redaction is enabled.
     /// Default is true.
     /// </summary>
-    public bool EnableRedaction { get; set; } = true; 
+    public bool EnableRedaction { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to log HTTP response details (status, headers, body, elapsed time).
+    /// Default is true.
+    /// </summary>
+    public bool LogResponse { get; set; } = true; 
     
 
     /// <summary>

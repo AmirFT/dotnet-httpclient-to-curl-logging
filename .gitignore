@@ -143,3 +143,5 @@ AmirFT.Http.CurlLogging/bin/Release/net8.0/AmirFT.Http.CurlLogging.pdb
 AmirFT.Http.CurlLogging/bin/Release/netstandard2.0/AmirFT.Http.CurlLogging.deps.json
 AmirFT.Http.CurlLogging/bin/Release/netstandard2.0/AmirFT.Http.CurlLogging.dll
 AmirFT.Http.CurlLogging/bin/Release/netstandard2.0/AmirFT.Http.CurlLogging.pdb
+AmirFT.Http.CurlLogging/bin/Release/AmirFT.Http.CurlLogging.1.0.1.nupkg
+AmirFT.Http.CurlLogging/obj/Release/AmirFT.Http.CurlLogging.1.0.1.nuspec

@@ -8,7 +8,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>AmirFT.Http.CurlLogging</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>AmirFT</Authors>
     <Description>A DelegatingHandler that logs HTTP requests as cURL commands for easy debugging and reproduction.</Description>
     <PackageTags>http;curl;logging;httpclient;debugging</PackageTags>
