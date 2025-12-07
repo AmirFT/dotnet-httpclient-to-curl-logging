@@ -17,6 +17,16 @@
 
 ---
 
+## Why I Built This
+
+I've been there — multiple times in production, dealing with errors from third-party APIs. The support team asks: *"Can you send us the cURL command to reproduce the issue?"*
+
+And I didn't have it.
+
+Manually reconstructing HTTP requests as cURL commands is tedious and error-prone. So I built this library to solve that problem once and for all. Now every HTTP request my applications make is automatically logged as a ready-to-use cURL command. When issues arise, I just grab the command from the logs and share it — no more guesswork.
+
+---
+
 ## Features
 
 - **Zero Configuration** - Just add the handler and start logging
